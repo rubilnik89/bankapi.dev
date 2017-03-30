@@ -22,6 +22,6 @@ class BankController extends Controller
         curl_close($ch);
         $re=json_decode($response);
 
-        print_r($re);
+        dd($re);
     }
 }
