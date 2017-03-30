@@ -12,8 +12,9 @@
 */
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    return view('banks');
+})->name('banks');
 
 
 Route::get('ceska', 'BankController@ceska')->name('ceska');
+Route::get('ceskaExchange', 'BankController@ceskaExchange')->name('ceskaExchange');
