@@ -22,6 +22,42 @@
                         </div>
                     </div>
 
+                    <div class="col-md-2 col-md-offset-8">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">Поиск мест по координатам</div>
+                            <div class="panel-body">
+                                {{ Form::open(array('action' => array('GeoController@lanLotSearch'), 'method' => 'get')) }}
+                                <input name="lanLotSearch" type="hidden" value="1">
+                                <label for="latitude">Search by account latitude</label>
+                                <input id="latitude" class="form-control" name="latitude" placeholder="latitude">
+                                <label for="longitude">Search by account longitude</label>
+                                <input id="longitude" class="form-control" name="longitude" placeholder="longitude">
+                                <label for="radius">Radius</label>
+                                <input id="radius" class="form-control" name="radius" placeholder="radius (m)">
+                                <button class="btn btn-primary" type="submit">OK</button>
+                                {{ Form::close() }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-2 col-md-offset-10">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">Поиск (первого)места по координатам</div>
+                            <div class="panel-body">
+                                {{ Form::open(array('action' => array('GeoController@lanLotSearch'), 'method' => 'get')) }}
+                                <input name="lanLotSearchPlace" type="hidden" value="1">
+                                <label for="latitude">Search by account latitude</label>
+                                <input id="latitude" class="form-control" name="latitude" placeholder="latitude">
+                                <label for="longitude">Search by account longitude</label>
+                                <input id="longitude" class="form-control" name="longitude" placeholder="longitude">
+                                <label for="radius">Radius</label>
+                                <input id="radius" class="form-control" name="radius" placeholder="radius (m)">
+                                <button class="btn btn-primary" type="submit">OK</button>
+                                {{ Form::close() }}
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

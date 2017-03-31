@@ -18,3 +18,4 @@ Route::get('/', function () {
 
 Route::get('ceska', 'BankController@ceska')->name('ceska');
 Route::get('ceskaExchange', 'BankController@ceskaExchange')->name('ceskaExchange');
+Route::get('lanLotSearch', 'GeoController@lanLotSearch')->name('lanLotSearch');
