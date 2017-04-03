@@ -13,7 +13,7 @@ class CreatePlaceTypesTable extends Migration
      */
     public function up()
     {
-        Schema::create('placeTypes', function (Blueprint $table) {
+        Schema::create('place_types', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
         });
@@ -26,6 +26,6 @@ class CreatePlaceTypesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('placeTypes');
+        Schema::dropIfExists('place_types');
     }
 }

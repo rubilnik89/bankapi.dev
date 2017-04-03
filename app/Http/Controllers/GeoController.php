@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PlaceType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
@@ -10,6 +11,7 @@ class GeoController extends Controller
     public function lanLotSearch(Request $request)
     {
         $key = env('GOOGLE_PLACE_API');
+        $types = PlaceType::all();
 
         if($request->placeid){
 
@@ -32,6 +34,7 @@ class GeoController extends Controller
         $lat = $request->latitude;
         $lon = $request->longitude;
         $radius = $request->radius;
+        $type = $request->type;
         $ch = curl_init();
 
         if ($request->next) {
@@ -40,7 +43,7 @@ class GeoController extends Controller
                 CURLOPT_HEADER => FALSE
             ];
         } else {
-            $opt = [CURLOPT_URL => "https://maps.googleapis.com/maps/api/place/nearbysearch/json?key=$key&location=$lat,$lon&radius=$radius",
+            $opt = [CURLOPT_URL => "https://maps.googleapis.com/maps/api/place/nearbysearch/json?key=$key&types=$type&location=$lat,$lon&radius=$radius",
                 CURLOPT_RETURNTRANSFER => TRUE,
                 CURLOPT_HEADER => FALSE
             ];
@@ -60,7 +63,7 @@ class GeoController extends Controller
         }
 
 //        Session::flash('items', 'Search items');
-        return view('lanlotSearch', compact('data', 'photos'));
+        return view('lanlotSearch', compact('data', 'photos', 'types'));
     }
 
 

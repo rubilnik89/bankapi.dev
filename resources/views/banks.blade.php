@@ -34,6 +34,15 @@
                                 <input id="longitude" class="form-control" name="longitude" placeholder="longitude">
                                 <label for="radius">Radius</label>
                                 <input id="radius" class="form-control" name="radius" placeholder="radius (m)">
+                                <label for="type">Type</label>
+                                <select id="type" class="form-control" name="type">
+                                    <option value="0" selected>Select type</option>
+                                    @foreach($types as $type)
+                                        <option value="{{ $type->name }}" {{ $type->name == Request::get('type') ? 'selected' : '' }}>
+                                            {{ $type->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
                                 <button class="btn btn-primary" type="submit">OK</button>
                                 {{ Form::close() }}
                             </div>
