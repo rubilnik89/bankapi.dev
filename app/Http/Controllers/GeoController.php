@@ -75,6 +75,10 @@ class GeoController extends Controller
         }
         $places = Place::all();
 
+        foreach ($places as $place){
+            $place->types = json_decode($place->types);
+        }
+
 
 
 

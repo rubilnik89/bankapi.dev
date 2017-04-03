@@ -36,7 +36,10 @@
                                             <tr class="clickable" onclick="window.location.href='{{ route('lanLotSearch', ['placeid' => $place->place_id]) }}';">
                                                 <td class="col-md-3">{{ $place->name }}</td>
                                                 <td class="col-md-3"><img src="{{ $place->photo }}"></td>
-                                                <td class="col-md-3">{{  $place->types }}</td>
+                                                <td class="col-md-3">
+                                                @foreach($place->types as $type)
+                                                    {!! $type .'<br>' !!}
+                                                @endforeach
                                             </tr>
                                         @endforeach
                                         {{--@foreach($data->results as $index => $result)--}}
