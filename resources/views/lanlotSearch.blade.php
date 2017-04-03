@@ -25,30 +25,37 @@
                                     <table class="table table-hover">
                                         <thead>
                                         <tr>
-                                            <th class="col-md-1">Icon</th>
                                             <th class="col-md-1">Name</th>
                                             <th class="col-md-1">Photo</th>
-                                            <th class="col-md-1">Type</th>
+                                            <th class="col-md-1">Types</th>
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        @foreach($data->results as $index => $result)
+                                        @foreach($places as $place)
                                             {{--<tr>--}}
-                                            <tr class="clickable" onclick="window.location.href='{{ route('lanLotSearch', ['placeid' => $data->results[$index]->place_id]) }}';">
-                                                <td class="col-md-3"><img src="{{ $result->icon }}"></td>
-                                                <td class="col-md-3">{{ $result->name }}</td>
-                                                @if($photos[$index] == 'nophoto')
-                                                    <td class="col-md-3">No photo</td>
-                                                @else
-                                                    <td class="col-md-3"><img src="{{ $photos[$index] }}"></td>
-                                                @endif
-                                                <td class="col-md-3">
-                                                    @foreach($result->types as $type)
-                                                        {!! $type .'<br>' !!}
-                                                    @endforeach
-                                                </td>
+                                            <tr class="clickable" onclick="window.location.href='{{ route('lanLotSearch', ['placeid' => $place->place_id]) }}';">
+                                                <td class="col-md-3">{{ $place->name }}</td>
+                                                <td class="col-md-3"><img src="{{ $place->photo }}"></td>
+                                                <td class="col-md-3">{{  $place->types }}</td>
                                             </tr>
                                         @endforeach
+                                        {{--@foreach($data->results as $index => $result)--}}
+                                            {{--<tr>--}}
+                                            {{--<tr class="clickable" onclick="window.location.href='{{ route('lanLotSearch', ['placeid' => $data->results[$index]->place_id]) }}';">--}}
+                                                {{--<td class="col-md-3"><img src="{{ $result->icon }}"></td>--}}
+                                                {{--<td class="col-md-3">{{ $result->name }}</td>--}}
+                                                {{--@if($photos[$index] == 'nophoto')--}}
+                                                    {{--<td class="col-md-3">No photo</td>--}}
+                                                {{--@else--}}
+                                                    {{--<td class="col-md-3"><img src="{{ $photos[$index] }}"></td>--}}
+                                                {{--@endif--}}
+                                                {{--<td class="col-md-3">--}}
+                                                    {{--@foreach($result->types as $type)--}}
+                                                        {{--{!! $type .'<br>' !!}--}}
+                                                    {{--@endforeach--}}
+                                                {{--</td>--}}
+                                            {{--</tr>--}}
+                                        {{--@endforeach--}}
                                         </tbody>
                                     </table>
                                 </div>
