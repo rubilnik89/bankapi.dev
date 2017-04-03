@@ -17,12 +17,12 @@
                         </div>
                     </div>
 
-                    @if(Session::has('items'))
+{{--                    @if(Session::has('items'))--}}
                         <div class="col-md-8">
                             <div class="panel panel-default">
                                 <div class="panel-heading">Результаты поиска</div>
                                 <div class="panel-body">
-                                    <table class="table table-hover table-striped">
+                                    <table class="table table-hover">
                                         <thead>
                                         <tr>
                                             <th class="col-md-1">Icon</th>
@@ -59,7 +59,7 @@
                                 @endif
                             </div>
                         </div>
-                    @endif
+                    {{--@endif--}}
 
                     {{--@if(Session::has('item'))--}}
                         {{--<div class="col-md-8">--}}
