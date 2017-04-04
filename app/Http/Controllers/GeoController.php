@@ -59,19 +59,51 @@ class GeoController extends Controller
         $data = json_decode($response);
 
         foreach ($data->results as $place) {
-            $photoreference = isset($place->photos) ? $place->photos[0]->photo_reference : 'nophoto';
 
-            if ($photoreference != 'nophoto') {
-                Image::make("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxheight=200&photoreference=$photoreference")
-                    ->save("images/places/" . $place->place_id . ".png");
+            $ch = curl_init();
+
+            $opt = [CURLOPT_URL => "https://maps.googleapis.com/maps/api/place/details/json?placeid=$place->place_id&key=$key",
+                CURLOPT_RETURNTRANSFER => TRUE,
+                CURLOPT_HEADER => FALSE
+            ];
+            curl_setopt_array($ch, $opt);
+
+            $response = curl_exec($ch);
+            curl_close($ch);
+            $dat = json_decode($response);
+//            dd($dat);
+
+            $photos = [];
+            if(isset($dat->result->photos)) {
+                foreach ($dat->result->photos as $index => $photo) {
+                    Image::make("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxheight=200&photoreference=$photo->photo_reference")
+                        ->save("images/places/" . $dat->result->place_id . $index . ".png");
+                    array_push($photos, "images/places/" . $dat->result->place_id . $index . ".png");
+
+                }
             }
+
+
             Place::create([
-                'name' => $place->name,
-                'place_id' => $place->place_id,
-                'types' => json_encode($place->types),
-                'options' => json_encode($place),
-                'photo' => ($photoreference == 'nophoto') ? 'images/nophoto.png' : "images/places/$place->place_id.png",
+                'name' => $dat->result->name,
+                'place_id' => $dat->result->place_id,
+                'types' => json_encode($dat->result->types),
+                'options' => json_encode($dat),
+                'photo' => json_encode($photos),
+//                'photo' => ($photoreference == 'nophoto') ? 'images/nophoto.png' : json_encode("images/places/$place->place_id.png"),
             ]);
+
+
+
+//            $photoreference = isset($place->photos) ? $place->photos[0]->photo_reference : 'nophoto';
+//
+//            if ($photoreference != 'nophoto') {
+//                Image::make("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxheight=200&photoreference=$photoreference")
+//                    ->save("images/places/" . $place->place_id . ".png");
+//            }
+
+
+
         }
         $places = Place::all();
 
