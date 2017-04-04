@@ -5,9 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Place;
 use App\Models\PlaceType;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
+//GOOGLE_PLACE_API=AIzaSyCGM1oo-dlw__FgzRG5JzIdpPH1YEV8puY
 
 class GeoController extends Controller
 {
@@ -29,8 +28,6 @@ class GeoController extends Controller
             $response = curl_exec($ch);
             curl_close($ch);
             $data = json_decode($response);
-//            Session::forget('items');
-//            Session::flash('item', 'Search item');
             dd($data);
         }
 
@@ -57,8 +54,16 @@ class GeoController extends Controller
         curl_close($ch);
 
         $data = json_decode($response);
+        $places = [];
 
+        $i = 0;
         foreach ($data->results as $place) {
+            $i++;
+            $p = Place::where('place_id', $place->place_id)->first();
+            if ($p){
+                if($i<21) {array_push($places, $p);}
+                continue;
+            }
 
             $ch = curl_init();
 
@@ -71,7 +76,6 @@ class GeoController extends Controller
             $response = curl_exec($ch);
             curl_close($ch);
             $dat = json_decode($response);
-//            dd($dat);
 
             $photos = [];
             if(isset($dat->result->photos)) {
@@ -79,42 +83,26 @@ class GeoController extends Controller
                     Image::make("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxheight=200&photoreference=$photo->photo_reference")
                         ->save("images/places/" . $dat->result->place_id . $index . ".png");
                     array_push($photos, "images/places/" . $dat->result->place_id . $index . ".png");
-
                 }
             }
-
-
             Place::create([
                 'name' => $dat->result->name,
                 'place_id' => $dat->result->place_id,
                 'types' => json_encode($dat->result->types),
                 'options' => json_encode($dat),
                 'photo' => json_encode($photos),
-//                'photo' => ($photoreference == 'nophoto') ? 'images/nophoto.png' : json_encode("images/places/$place->place_id.png"),
             ]);
-
-
-
-//            $photoreference = isset($place->photos) ? $place->photos[0]->photo_reference : 'nophoto';
-//
-//            if ($photoreference != 'nophoto') {
-//                Image::make("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxheight=200&photoreference=$photoreference")
-//                    ->save("images/places/" . $place->place_id . ".png");
-//            }
-
-
-
+            if($i<21) {array_push($places, Place::where('place_id', $place->place_id)->first());}
         }
-        $places = Place::all();
+//        dd($places[0]['name']);
 
         foreach ($places as $place){
-            $place->types = json_decode($place->types);
+            $place['types'] = json_decode($place['types']);
+            $photos = json_decode($place['photo']);
+            $place['photo'] = array_shift($photos);
         }
+//        dd($data);
 
-
-
-
-//        Session::flash('items', 'Search items');
         return view('lanlotSearch', compact('data', 'types', 'places'));
     }
 
