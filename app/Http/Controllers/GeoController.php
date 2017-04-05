@@ -8,7 +8,8 @@ use App\Models\PlaceType;
 use Illuminate\Http\Request;
 use Intervention\Image\Facades\Image;
 use GuzzleHttp\Client;
-//GOOGLE_PLACE_API=AIzaSyA9cHVlqZ-bm3daLP6A6TYWt_wa1yhgtZM
+
+//AIzaSyA9cHVlqZ-bm3daLP6A6TYWt_wa1yhgtZM
 //AIzaSyCGM1oo-dlw__FgzRG5JzIdpPH1YEV8puY
 //AIzaSyC5VfB2Sz7gK0__eWhTmLNSmWngCHbuJ5Y
 //AIzaSyCAg-J0mchIdBae9Xqf7jZBe-SIVoxOWcM
@@ -20,7 +21,7 @@ class GeoController extends Controller
         $key = env('GOOGLE_PLACE_API');
         $types = PlaceType::all();
 
-        if($request->placeid){
+        if ($request->placeid) {
 
             $ch = curl_init();
 
@@ -65,8 +66,10 @@ class GeoController extends Controller
         foreach ($data->results as $place) {
             $i++;
             $p = Place::where('place_id', $place->place_id)->first();
-            if ($p){
-                if($i<21) {array_push($places, $p);}
+            if ($p) {
+                if ($i < 21) {
+                    array_push($places, $p);
+                }
                 continue;
             }
 
@@ -83,7 +86,7 @@ class GeoController extends Controller
             $dat = json_decode($response);
 
             $photos = [];
-            if(isset($dat->result->photos)) {
+            if (isset($dat->result->photos)) {
                 foreach ($dat->result->photos as $index => $photo) {
                     Image::make("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxheight=200&photoreference=$photo->photo_reference")
                         ->save("images/places/" . $dat->result->place_id . $index . ".png");
@@ -97,11 +100,13 @@ class GeoController extends Controller
                 'options' => json_encode($dat),
                 'photo' => json_encode($photos),
             ]);
-            if($i<21) {array_push($places, Place::where('place_id', $place->place_id)->first());}
+            if ($i < 21) {
+                array_push($places, Place::where('place_id', $place->place_id)->first());
+            }
         }
 //        dd($places[0]['name']);
 
-        foreach ($places as $place){
+        foreach ($places as $place) {
             $place['types'] = json_decode($place['types']);
             $photos = json_decode($place['photo']);
             $place['photo'] = array_shift($photos);
@@ -114,41 +119,52 @@ class GeoController extends Controller
     public function placeidSearch()
     {
         $key = env('GOOGLE_PLACE_API');
-
-        $lat = 59.911650;
-        $lon = 30.276740;
+        //координаты левого верхнего угла
+        $lat = 60.08470815;
+        $lon = 30.09790421;
         $radius = 500;
         $type = 'restaurant';
+        //широта правой точки
+        $lastLat = 60.10251039;
+        //$i 51 раз проходит от верха до низа
         set_time_limit(0);
+        for ($i = 1; $i < 52; $i++) {
+            //пока не достигли правой точки (33 раза) делаем запрос, сохраняем данные и вконце изменяем координаты
+            set_time_limit(0);
+            while ($lat < $lastLat) {
 
-        while ($lat < 59.912469) {
-            $client = new Client();
-            $result = $client->get("https://maps.googleapis.com/maps/api/place/radarsearch/json?key=$key&types=$type&location=$lat,$lon&radius=$radius");
-            $data = json_decode($result->getBody());
+                $client = new Client();
+                $result = $client->get("https://maps.googleapis.com/maps/api/place/radarsearch/json?key=$key&types=$type&location=$lat,$lon&radius=$radius");
+                $data = json_decode($result->getBody());
 
-            foreach ($data->results as $place) {
+                foreach ($data->results as $place) {
 
-                if (PlaceId::where('place_id', $place->place_id)->first()) {
-                    continue;
+                    if (PlaceId::where('place_id', $place->place_id)->first()) {
+                        continue;
+                    }
+                    PlaceId::create([
+                        'lat' => $place->geometry->location->lat,
+                        'lon' => $place->geometry->location->lng,
+                        'place_id' => $place->place_id,
+                    ]);
                 }
-                PlaceId::create([
-                    'lat' => $place->geometry->location->lat,
-                    'lon' => $place->geometry->location->lng,
-                    'place_id' => $place->place_id,
-                ]);
+                $lat += 0.00053946181;
+                $lon += 0.01338438545;
             }
-            $lat += 0.0004;
-            $lon += 0.0135;
+            //после достижения правой стороны меняем координаты на новый левый угол и устанавливаем новую правую широту
+            $lat = 60.08470815 - (0.00672917392 * $i);
+            $lon = 30.09790421 - (0.0000908796 * $i);
+            $lastLat -= 0.0071325145;
         }
-
         return 'Success!';
     }
 
-    public function placesPush()
+    public
+    function placesPush()
     {
         $key = env('GOOGLE_PLACE_API');
         $place_ids = PlaceId::all();
-        foreach ($place_ids as $place_id){
+        foreach ($place_ids as $place_id) {
             $client = new Client();
             $result = $client->get("https://maps.googleapis.com/maps/api/place/details/json?placeid=$place_id->place_id&key=$key");
             $data = json_decode($result->getBody());
@@ -159,7 +175,9 @@ class GeoController extends Controller
                 $client2->get("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxheight=200&photoreference=$photo_reference",
                     ['sink' => "images/places/" . $data->result->place_id . ".png"]);
                 $photo = "images/places/" . $data->result->place_id . ".png";
-            } else { $photo = "images/nophoto.png";}
+            } else {
+                $photo = "images/nophoto.png";
+            }
             Place::create([
                 'name' => $data->result->name,
                 'place_id' => $data->result->place_id,
@@ -172,7 +190,8 @@ class GeoController extends Controller
         return 'Success!';
     }
 
-    public function run()
+    public
+    function run()
     {
         $key = env('GOOGLE_PLACE_API');
 
@@ -200,7 +219,9 @@ class GeoController extends Controller
                     $client2->get("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxheight=200&photoreference=$photo_reference",
                         ['sink' => "images/places/" . $data1->result->place_id . ".png"]);
                     $photo = "images/places/" . $data1->result->place_id . ".png";
-                } else { $photo = "images/nophoto.png";}
+                } else {
+                    $photo = "images/nophoto.png";
+                }
                 Place::create([
                     'name' => $data1->result->name,
                     'place_id' => $data1->result->place_id,
