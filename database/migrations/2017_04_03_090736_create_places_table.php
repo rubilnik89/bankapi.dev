@@ -20,7 +20,7 @@ class CreatePlacesTable extends Migration
             $table->json('options');
             $table->json('types');
             $table->json('photos');
-            $table->string('photo');
+            $table->text('photo');
             $table->timestamps();
         });
     }
