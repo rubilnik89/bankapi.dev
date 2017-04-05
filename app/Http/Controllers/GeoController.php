@@ -146,7 +146,30 @@ class GeoController extends Controller
 
     public function placesPush()
     {
+        $key = env('GOOGLE_PLACE_API');
+        $place_ids = PlaceId::all();
+        foreach ($place_ids as $place_id){
+            $client = new Client();
+            $result = $client->get("https://maps.googleapis.com/maps/api/place/details/json?placeid=$place_id->place_id&key=$key");
+            $data = json_decode($result->getBody());
 
+            if (isset($data->result->photos)) {
+                $client2 = new Client();
+                $photo_reference = $data->result->photos[0]->photo_reference;
+                $client2->get("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxheight=200&photoreference=$photo_reference",
+                    ['sink' => "images/places/" . $data->result->place_id . ".png"]);
+                $photo = "images/places/" . $data->result->place_id . ".png";
+            } else { $photo = "images/nophoto.png";}
+            Place::create([
+                'name' => $data->result->name,
+                'place_id' => $data->result->place_id,
+                'types' => json_encode($data->result->types),
+                'options' => json_encode($data),
+                'photos' => (isset($data->result->photos)) ? json_encode($data->result->photos) : json_encode([]),
+                'photo' => $photo,
+            ]);
+        }
+        return 'Success!';
     }
 
     public function run()
