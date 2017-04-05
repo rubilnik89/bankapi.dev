@@ -6,7 +6,10 @@ use App\Models\Place;
 use App\Models\PlaceType;
 use Illuminate\Http\Request;
 use Intervention\Image\Facades\Image;
-//GOOGLE_PLACE_API=AIzaSyCGM1oo-dlw__FgzRG5JzIdpPH1YEV8puY
+use GuzzleHttp\Client;
+//GOOGLE_PLACE_API=AIzaSyA9cHVlqZ-bm3daLP6A6TYWt_wa1yhgtZM
+//AIzaSyCGM1oo-dlw__FgzRG5JzIdpPH1YEV8puY
+//AIzaSyC5VfB2Sz7gK0__eWhTmLNSmWngCHbuJ5Y
 
 class GeoController extends Controller
 {
@@ -106,5 +109,51 @@ class GeoController extends Controller
         return view('lanlotSearch', compact('data', 'types', 'places'));
     }
 
+    public function run()
+    {
+        $key = env('GOOGLE_PLACE_API');
+
+        $lat = 59.935994;
+        $lon = 30.315396;
+        $radius = 100;
+        $type = 'restaurant';
+        set_time_limit(0);
+        while ($lat > 59.933991) {
+            $client = new Client();
+            $result = $client->get("https://maps.googleapis.com/maps/api/place/nearbysearch/json?key=$key&types=$type&location=$lat,$lon&radius=$radius");
+            $data = json_decode($result->getBody());
+
+            foreach ($data->results as $place) {
+
+                if (Place::where('place_id', $place->place_id)->first()) {
+                    continue;
+                }
+                $client1 = new Client();
+                $result1 = $client1->get("https://maps.googleapis.com/maps/api/place/details/json?placeid=$place->place_id&key=$key");
+                $data1 = json_decode($result1->getBody());
+
+                $photos = [];
+                if (isset($data1->result->photos)) {
+                    foreach ($data1->result->photos as $index => $photo) {
+                        $client2 = new Client();
+                        $client2->get("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxheight=200&photoreference=$photo->photo_reference",
+                            ['sink' => "images/places/" . $data1->result->place_id . $index . ".png"]);
+                        array_push($photos, "images/places/" . $data1->result->place_id . $index . ".png");
+                    }
+                }
+                Place::create([
+                    'name' => $data1->result->name,
+                    'place_id' => $data1->result->place_id,
+                    'types' => json_encode($data1->result->types),
+                    'options' => json_encode($data1),
+                    'photo' => json_encode($photos),
+                ]);
+            }
+            $lat -= 0.0001;
+            $lon += 0.0009;
+        }
+
+        return 'Success!';
+    }
 
 }
