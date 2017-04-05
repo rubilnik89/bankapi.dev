@@ -113,18 +113,17 @@ class GeoController extends Controller
     {
         $key = env('GOOGLE_PLACE_API');
 
-        $lat = 59.935994;
-        $lon = 30.315396;
-        $radius = 100;
+        $lat = 59.911650;
+        $lon = 30.276740;
+        $radius = 500;
         $type = 'restaurant';
         set_time_limit(0);
-        while ($lat > 59.933991) {
+        while ($lat > 59.911641) {
             $client = new Client();
-            $result = $client->get("https://maps.googleapis.com/maps/api/place/nearbysearch/json?key=$key&types=$type&location=$lat,$lon&radius=$radius");
+            $result = $client->get("https://maps.googleapis.com/maps/api/place/radarsearch/json?key=$key&types=$type&location=$lat,$lon&radius=$radius");
             $data = json_decode($result->getBody());
 
             foreach ($data->results as $place) {
-
                 if (Place::where('place_id', $place->place_id)->first()) {
                     continue;
                 }
@@ -132,25 +131,24 @@ class GeoController extends Controller
                 $result1 = $client1->get("https://maps.googleapis.com/maps/api/place/details/json?placeid=$place->place_id&key=$key");
                 $data1 = json_decode($result1->getBody());
 
-                $photos = [];
                 if (isset($data1->result->photos)) {
-                    foreach ($data1->result->photos as $index => $photo) {
-                        $client2 = new Client();
-                        $client2->get("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxheight=200&photoreference=$photo->photo_reference",
-                            ['sink' => "images/places/" . $data1->result->place_id . $index . ".png"]);
-                        array_push($photos, "images/places/" . $data1->result->place_id . $index . ".png");
-                    }
-                }
+                    $client2 = new Client();
+                    $photo_reference = $data1->result->photos[0]->photo_reference;
+                    $client2->get("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxheight=200&photoreference=$photo_reference",
+                        ['sink' => "images/places/" . $data1->result->place_id . ".png"]);
+                    $photo = "images/places/" . $data1->result->place_id . ".png";
+                } else { $photo = "images/nophoto.png";}
                 Place::create([
                     'name' => $data1->result->name,
                     'place_id' => $data1->result->place_id,
                     'types' => json_encode($data1->result->types),
                     'options' => json_encode($data1),
-                    'photo' => json_encode($photos),
+                    'photos' => (isset($data1->result->photos)) ? json_encode($data1->result->photos) : json_encode([]),
+                    'photo' => $photo,
                 ]);
             }
-            $lat -= 0.0001;
-            $lon += 0.0009;
+            $lat -= 0.0004;
+            $lon += 0.0135;
         }
 
         return 'Success!';

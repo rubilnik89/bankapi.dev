@@ -19,7 +19,8 @@ class CreatePlacesTable extends Migration
             $table->string('place_id')->unique();
             $table->json('options');
             $table->json('types');
-            $table->json('photo');
+            $table->json('photos');
+            $table->string('photo');
             $table->timestamps();
         });
     }
