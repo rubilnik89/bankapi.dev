@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Place;
+use App\Models\PlaceId;
 use App\Models\PlaceType;
 use Illuminate\Http\Request;
 use Intervention\Image\Facades\Image;
@@ -10,6 +11,7 @@ use GuzzleHttp\Client;
 //GOOGLE_PLACE_API=AIzaSyA9cHVlqZ-bm3daLP6A6TYWt_wa1yhgtZM
 //AIzaSyCGM1oo-dlw__FgzRG5JzIdpPH1YEV8puY
 //AIzaSyC5VfB2Sz7gK0__eWhTmLNSmWngCHbuJ5Y
+//AIzaSyCAg-J0mchIdBae9Xqf7jZBe-SIVoxOWcM
 
 class GeoController extends Controller
 {
@@ -107,6 +109,44 @@ class GeoController extends Controller
 //        dd($data);
 
         return view('lanlotSearch', compact('data', 'types', 'places'));
+    }
+
+    public function placeidSearch()
+    {
+        $key = env('GOOGLE_PLACE_API');
+
+        $lat = 59.911650;
+        $lon = 30.276740;
+        $radius = 500;
+        $type = 'restaurant';
+        set_time_limit(0);
+
+        while ($lat < 59.912469) {
+            $client = new Client();
+            $result = $client->get("https://maps.googleapis.com/maps/api/place/radarsearch/json?key=$key&types=$type&location=$lat,$lon&radius=$radius");
+            $data = json_decode($result->getBody());
+
+            foreach ($data->results as $place) {
+
+                if (PlaceId::where('place_id', $place->place_id)->first()) {
+                    continue;
+                }
+                PlaceId::create([
+                    'lat' => $place->geometry->location->lat,
+                    'lon' => $place->geometry->location->lng,
+                    'place_id' => $place->place_id,
+                ]);
+            }
+            $lat += 0.0004;
+            $lon += 0.0135;
+        }
+
+        return 'Success!';
+    }
+
+    public function placesPush()
+    {
+
     }
 
     public function run()
