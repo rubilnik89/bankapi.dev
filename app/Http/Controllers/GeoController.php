@@ -12,6 +12,7 @@ use GuzzleHttp\Client;
 //AIzaSyA9cHVlqZ-bm3daLP6A6TYWt_wa1yhgtZM
 //AIzaSyCGM1oo-dlw__FgzRG5JzIdpPH1YEV8puY
 //AIzaSyC5VfB2Sz7gK0__eWhTmLNSmWngCHbuJ5Y
+
 //AIzaSyCAg-J0mchIdBae9Xqf7jZBe-SIVoxOWcM
 
 class GeoController extends Controller
@@ -170,7 +171,7 @@ class GeoController extends Controller
         return 'Success!';
     }
 
-    public function placesPush()
+    public function placesPushAll()
     {
         $key = env('GOOGLE_PLACE_API');
         $place_ids = PlaceId::all();
@@ -196,6 +197,39 @@ class GeoController extends Controller
                 'photos' => (isset($data->result->photos)) ? json_encode($data->result->photos) : json_encode([]),
                 'photo' => $photo,
             ]);
+        }
+        return 'Success!';
+    }
+
+    public function placesPush10()
+    {
+        $key = env('GOOGLE_PLACE_API');
+        $place_ids = PlaceId::where('is_executed', 0)->limit(10)->get();
+//        dd($place_ids);
+        foreach ($place_ids as $place_id) {
+            $client = new Client();
+            $result = $client->get("https://maps.googleapis.com/maps/api/place/details/json?placeid=$place_id->place_id&key=$key");
+            $data = json_decode($result->getBody());
+//            dd($data);
+
+            if (isset($data->result->photos)) {
+                $client2 = new Client();
+                $photo_reference = $data->result->photos[0]->photo_reference;
+                $client2->get("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxheight=200&photoreference=$photo_reference",
+                    ['sink' => "images/places/" . $data->result->place_id . ".png"]);
+                $photo = "images/places/" . $data->result->place_id . ".png";
+            } else {
+                $photo = "images/nophoto.png";
+            }
+            Place::create([
+                'name' => $data->result->name,
+                'place_id' => $data->result->place_id,
+                'types' => json_encode($data->result->types),
+                'options' => json_encode($data),
+                'photos' => (isset($data->result->photos)) ? json_encode($data->result->photos) : json_encode([]),
+                'photo' => $photo,
+            ]);
+            PlaceId::where('place_id', $place_id->place_id)->update(['is_executed' => 1]);
         }
         return 'Success!';
     }
