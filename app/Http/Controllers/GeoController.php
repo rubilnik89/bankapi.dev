@@ -120,18 +120,20 @@ class GeoController extends Controller
     {
         $key = env('GOOGLE_PLACE_API');
         //координаты левого верхнего угла
-        $lat = 60.08470815;
-        $lon = 30.09790421;
+        $lat = 60.089805;
+        $lon = 30.090783;
         $radius = 500;
         $type = 'restaurant';
-        //широта правой точки
-        $lastLat = 60.10251039;
-        //$i 51 раз проходит от верха до низа
+        //долгота правой точки
+        $lastLon = 30.559388;
+        $lastLat = 59.745284;
+        $i = 1;
+        //пока не пройдем от верха до низа(51 раз)
         set_time_limit(0);
-        for ($i = 1; $i < 52; $i++) {
-            //пока не достигли правой точки (33 раза) делаем запрос, сохраняем данные и вконце изменяем координаты
+        while($lat > $lastLat) {
+            //пока не достигли правой точки (35 раз) делаем запрос, сохраняем данные и вконце изменяем координаты
             set_time_limit(0);
-            while ($lat < $lastLat) {
+            while ($lon < $lastLon) {
 
                 $client = new Client();
                 $result = $client->get("https://maps.googleapis.com/maps/api/place/radarsearch/json?key=$key&types=$type&location=$lat,$lon&radius=$radius");
@@ -148,19 +150,17 @@ class GeoController extends Controller
                         'place_id' => $place->place_id,
                     ]);
                 }
-                $lat += 0.00053946181;
-                $lon += 0.01338438545;
+                $lon += 0.01338871428;
             }
             //после достижения правой стороны меняем координаты на новый левый угол и устанавливаем новую правую широту
-            $lat = 60.08470815 - (0.00672917392 * $i);
-            $lon = 30.09790421 - (0.0000908796 * $i);
-            $lastLat -= 0.0071325145;
+            $lat = 60.089805 - (0.00675531372 * $i);
+            $lon = 30.090783;
+            $i++;
         }
         return 'Success!';
     }
 
-    public
-    function placesPush()
+    public function placesPush()
     {
         $key = env('GOOGLE_PLACE_API');
         $place_ids = PlaceId::all();
@@ -190,8 +190,7 @@ class GeoController extends Controller
         return 'Success!';
     }
 
-    public
-    function run()
+    public function run()
     {
         $key = env('GOOGLE_PLACE_API');
 
