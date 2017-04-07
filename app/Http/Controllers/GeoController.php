@@ -9,12 +9,6 @@ use Illuminate\Http\Request;
 use Intervention\Image\Facades\Image;
 use GuzzleHttp\Client;
 
-//AIzaSyA9cHVlqZ-bm3daLP6A6TYWt_wa1yhgtZM
-//AIzaSyCGM1oo-dlw__FgzRG5JzIdpPH1YEV8puY
-//AIzaSyC5VfB2Sz7gK0__eWhTmLNSmWngCHbuJ5Y
-
-//AIzaSyCAg-J0mchIdBae9Xqf7jZBe-SIVoxOWcM
-
 class GeoController extends Controller
 {
     public function lanLotSearch(Request $request)
@@ -121,49 +115,62 @@ class GeoController extends Controller
     {
         $key = env('GOOGLE_PLACE_API');
         $radius = 500;
-        $type = 'restaurant';
+        $type = 'meal_takeaway';
+//        $type = 'restaurant'bar,cafe,bakerymeal_delivery,+
         //координаты левого верхнего угла
+//        $lat = 59.900957384433;
         $lat = 60.089805;
         $lon = 30.090783;
         //координаты правого нижнего угла
-        $lastLon = 30.559388;
         $lastLat = 59.745284;
+        $lastLon = 30.559388;
         //расстояние по горизонтали (км)
-        $leftRight = 25.990;
+//        $leftRight = 25.990;
         //расстояние по вертикали (км)
-        $upDown = 38.311;
+//        $upDown = 38.311;
         //диаметр поиска с учетом пересечения дабы захватить всю площадь(км)
-        $d = 0.75;
+//        $d = 0.75;
         //(Сдвиг (широты/долготы) (вправо/вниз)) = ((Разница между координатами (левый верх/правый верх)/(правый низ/правый верх)) / (Количество запросов по горизонтали/вертикали))
-        $latShift = ($lat - $lastLat) / (($upDown) / $d);
-        $lonShift = ($lastLon - $lon) / (($leftRight) / $d);
+//        $latShift = ($lat - $lastLat) / (($upDown) / $d);
+//        $lonShift = ($lastLon - $lon) / (($leftRight) / $d);
+        $latShift = 0.0067445576988332;
+        $lonShift = 0.0135226529434398;
         $i = 1;
         //пока не пройдем от верха до низа(51 раз)
         set_time_limit(0);
-        while($lat > $lastLat) {
+        while ($lat > $lastLat) {
             //пока не достигли правой точки (35 раз) делаем запрос, сохраняем данные и вконце изменяем координаты
             set_time_limit(0);
             while ($lon < $lastLon) {
 
                 $client = new Client();
-                $result = $client->get("https://maps.googleapis.com/maps/api/place/radarsearch/json?key=$key&types=$type&location=$lat,$lon&radius=$radius");
+                $result = $client->get("https://maps.googleapis.com/maps/api/place/radarsearch/json?key=$key&type=$type&location=$lat,$lon&radius=$radius");
                 $data = json_decode($result->getBody());
 
-                foreach ($data->results as $place) {
-
-                    if (PlaceId::where('place_id', $place->place_id)->first()) {
+                if ($data->status != 'OVER_QUERY_LIMIT') {
+                    if ($data->status == 'ZERO_RESULTS') {
+                        $lon += $lonShift;
                         continue;
+                    } else {
+                        foreach ($data->results as $place) {
+
+                            if (PlaceId::where('place_id', $place->place_id)->first()) {
+                                continue;
+                            }
+                            PlaceId::create([
+                                'lat' => $place->geometry->location->lat,
+                                'lon' => $place->geometry->location->lng,
+                                'place_id' => $place->place_id,
+                            ]);
+                        }
                     }
-                    PlaceId::create([
-                        'lat' => $place->geometry->location->lat,
-                        'lon' => $place->geometry->location->lng,
-                        'place_id' => $place->place_id,
-                    ]);
-                }
-                //делаем сдвиг долготы не меняя широты
-                $lon += $lonShift;
+                    //делаем сдвиг долготы не меняя широты
+                    $lon += $lonShift;
+                } else return "OVER_QUERY_LIMIT Failed in lat = $lat, lon = $lon";
             }
             //после достижения правой стороны меняем координаты на новый левый угол и устанавливаем новую правую широту
+
+//            $lat = 59.900957384433 - ($latShift * $i);
             $lat = 60.089805 - ($latShift * $i);
             $lon = 30.090783;
             $i++;
@@ -201,21 +208,22 @@ class GeoController extends Controller
         return 'Success!';
     }
 
-    public function placesPush10()
+    public function placesPush100($key)
     {
-        $key = env('GOOGLE_PLACE_API');
-        $place_ids = PlaceId::where('is_executed', 0)->limit(10)->get();
-//        dd($place_ids);
+//        $key = env('GOOGLE_PLACE_API');
+        $place_ids = PlaceId::where('is_executed', 0)
+            ->limit(100)
+            ->get();
+        set_time_limit(0);
         foreach ($place_ids as $place_id) {
             $client = new Client();
             $result = $client->get("https://maps.googleapis.com/maps/api/place/details/json?placeid=$place_id->place_id&key=$key");
             $data = json_decode($result->getBody());
-//            dd($data);
 
             if (isset($data->result->photos)) {
                 $client2 = new Client();
                 $photo_reference = $data->result->photos[0]->photo_reference;
-                $client2->get("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxheight=200&photoreference=$photo_reference",
+                $client2->get("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxwidth=1600&maxheight=1600&photoreference=$photo_reference",
                     ['sink' => "images/places/" . $data->result->place_id . ".png"]);
                 $photo = "images/places/" . $data->result->place_id . ".png";
             } else {
@@ -232,6 +240,50 @@ class GeoController extends Controller
             PlaceId::where('place_id', $place_id->place_id)->update(['is_executed' => 1]);
         }
         return 'Success!';
+    }
+
+    public function placesPush50photos($key)
+    {
+//        $key = env('GOOGLE_PLACE_API');
+        $place_ids = PlaceId::where('is_executed', 1)
+            ->where('downloaded_photos', 0)
+            ->limit(100)
+            ->get();
+        set_time_limit(0);
+        foreach ($place_ids as $place_id) {
+            $client = new Client();
+            $result = $client->get("https://maps.googleapis.com/maps/api/place/details/json?placeid=$place_id->place_id&key=$key");
+            $data = json_decode($result->getBody());
+
+            if ($data->status == 'OK') {
+                if (isset($data->result->photos)) {
+                    for ($i = 1; $i < count($data->result->photos); $i++) {
+                        $client2 = new Client();
+                        $photo_reference = $data->result->photos[$i]->photo_reference;
+                        $tt = $client2->get("https://maps.googleapis.com/maps/api/place/photo?key=$key&maxwidth=1600&maxheight=1600&photoreference=$photo_reference",
+                            ['sink' => "images/places/" . $data->result->place_id . $i . ".png"]);
+                        if ($tt->getReasonPhrase() != 'OK') {
+                            return "images/places/" . $data->result->place_id . $i . ".png failed";
+                        }
+                    }
+                }
+                PlaceId::where('place_id', $place_id->place_id)->update(['downloaded_photos' => 1]);
+            } else return "Failed in $place_id->place_id";
+        }
+        return 'Success!';
+    }
+
+    public function push()
+    {
+        $keys = ['AIzaSyDCX7EGAc8ZwEP3pxL6NFkg-YgyiO9RiOQ',
+            ];
+        set_time_limit(0);
+        foreach ($keys as $key){
+            $this->placesPush100($key);
+            $this->placesPush50photos($key);
+        }
+
+
     }
 
     public function run()

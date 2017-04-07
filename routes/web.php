@@ -20,4 +20,6 @@ Route::get('lanLotSearch', 'GeoController@lanLotSearch')->name('lanLotSearch');
 Route::get('run', 'GeoController@run')->name('run');
 Route::get('placeidSearch', 'GeoController@placeidSearch')->name('placeidSearch');
 Route::get('placesPushAll', 'GeoController@placesPushAll')->name('placesPushAll');
-Route::get('placesPush10', 'GeoController@placesPush10')->name('placesPush10');
+Route::get('placesPush100', 'GeoController@placesPush100')->name('placesPush100');
+Route::get('placesPush50photos', 'GeoController@placesPush50photos')->name('placesPush50photos');
+Route::get('push', 'GeoController@push')->name('push');
