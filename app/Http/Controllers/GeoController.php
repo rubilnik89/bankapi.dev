@@ -116,7 +116,7 @@ class GeoController extends Controller
         $key = env('GOOGLE_PLACE_API');
         $radius = 500;
         $type = 'meal_takeaway';
-//        $type = 'restaurant'bar,cafe,bakerymeal_delivery,+
+//        $type = 'restaurant'bar,cafe,bakery,meal_delivery,+
         //координаты левого верхнего угла
 //        $lat = 59.900957384433;
         $lat = 60.089805;
@@ -136,6 +136,7 @@ class GeoController extends Controller
         $latShift = 0.0067445576988332;
         $lonShift = 0.0135226529434398;
         $i = 1;
+        $j = 1;
         //пока не пройдем от верха до низа(51 раз)
         set_time_limit(0);
         while ($lat > $lastLat) {
@@ -148,32 +149,39 @@ class GeoController extends Controller
                 $data = json_decode($result->getBody());
 
                 if ($data->status != 'OVER_QUERY_LIMIT') {
-                    if ($data->status == 'ZERO_RESULTS') {
-                        $lon += $lonShift;
-                        continue;
-                    } else {
-                        foreach ($data->results as $place) {
-
-                            if (PlaceId::where('place_id', $place->place_id)->first()) {
-                                continue;
-                            }
-                            PlaceId::create([
-                                'lat' => $place->geometry->location->lat,
-                                'lon' => $place->geometry->location->lng,
-                                'place_id' => $place->place_id,
-                            ]);
-                        }
-                    }
-                    //делаем сдвиг долготы не меняя широты
+                    return "OVER_QUERY_LIMIT Failed in lat = $lat, lon = $lon";
+                }
+                if ($data->status == 'ZERO_RESULTS') {
                     $lon += $lonShift;
-                } else return "OVER_QUERY_LIMIT Failed in lat = $lat, lon = $lon";
+                    continue;
+                }
+                foreach ($data->results as $place) {
+
+                    if (PlaceId::where('place_id', $place->place_id)->first()) {
+                        continue;
+                    }
+                    PlaceId::create([
+                        'lat' => $place->geometry->location->lat,
+                        'lon' => $place->geometry->location->lng,
+                        'place_id' => $place->place_id,
+                    ]);
+                }
+                //делаем сдвиг долготы не меняя широты
+                $lon += $lonShift;
             }
             //после достижения правой стороны меняем координаты на новый левый угол и устанавливаем новую правую широту
-
-//            $lat = 59.900957384433 - ($latShift * $i);
-            $lat = 60.089805 - ($latShift * $i);
-            $lon = 30.090783;
-            $i++;
+            // $j нужен для того чтобы понять нужен ли сдвиг вправо или не нужен
+            if ($j == 1) {
+                $lat = 60.08643272115058 - ($latShift * $i);
+                $lon = 30.09754432647172;
+                $i++;
+                $j = 0;
+            } else {
+                $lat = 60.089805 - ($latShift * $i);
+                $lon = 30.090783;
+                $i++;
+                $j = 1;
+            }
         }
         return 'Success!';
     }
@@ -275,15 +283,23 @@ class GeoController extends Controller
 
     public function push()
     {
-        $keys = ['AIzaSyDCX7EGAc8ZwEP3pxL6NFkg-YgyiO9RiOQ',
-            ];
+        $keys = ['AIzaSyBj3AZzhuYHIbV5mGsxAb-Z50k-H6K7sN0',
+            'AIzaSyBCy3C6Pv0-mtTxmoNNxspaGP0P2cZ2IzI',
+            'AIzaSyAIZbgMKtq9Kei0Ac-ezWeOS7k6ekl-Hy4',
+            'AIzaSyCkPHt6RrxcBA-HfdX55D5Tv9Hz4doHmDc',
+            'AIzaSyCkB8tMDmnnOUujHSTwzoe6Mt1nn1HQ89g',
+            'AIzaSyAHRhF11RrKHw_SdcPss8RsqE8uBJ6TQ4Q',
+            'AIzaSyCWgDAqtpxx_LaqwKhIkxWjvPmnLY6mFH4',
+            'AIzaSyBrgmfWbDB4fhIcwc50nctdROsEcpf46HM',
+            'AIzaSyCeXLmOrWWDDIgF941sNJqdCLAo1_Aw1rw',
+            'AIzaSyAAHJLl4CNhBf8oL2H8T9KHEjHa3JBUmhE',
+            'AIzaSyAYgonNQhpxYdH8ummdMcv2_JK9Ly5HZno',
+        ];
         set_time_limit(0);
-        foreach ($keys as $key){
+        foreach ($keys as $key) {
             $this->placesPush100($key);
             $this->placesPush50photos($key);
         }
-
-
     }
 
     public function run()

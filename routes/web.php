@@ -19,6 +19,7 @@ Route::get('ceskaExchange', 'BankController@ceskaExchange')->name('ceskaExchange
 Route::get('lanLotSearch', 'GeoController@lanLotSearch')->name('lanLotSearch');
 Route::get('run', 'GeoController@run')->name('run');
 Route::get('placeidSearch', 'GeoController@placeidSearch')->name('placeidSearch');
+Route::get('placeidSearch1', 'GeoController@placeidSearch1')->name('placeidSearch1');
 Route::get('placesPushAll', 'GeoController@placesPushAll')->name('placesPushAll');
 Route::get('placesPush100', 'GeoController@placesPush100')->name('placesPush100');
 Route::get('placesPush50photos', 'GeoController@placesPush50photos')->name('placesPush50photos');
