@@ -8,6 +8,7 @@ use App\Models\PlaceType;
 use Illuminate\Http\Request;
 use Intervention\Image\Facades\Image;
 use GuzzleHttp\Client;
+use Google\Cloud\Translate\TranslateClient;
 
 class GeoController extends Controller
 {
@@ -172,8 +173,8 @@ class GeoController extends Controller
             //после достижения правой стороны меняем координаты на новый левый угол и устанавливаем новую правую широту
             // $j нужен для того чтобы понять нужен ли сдвиг вправо или не нужен
             if ($j == 1) {
-                $lat = 60.08643272115058 - ($latShift * $i);
-                $lon = 30.09754432647172;
+                $lat = 60.09317727884941 - ($latShift * $i);
+                $lon = 30.09754432647172; //($lonshift / 2) + $lon
                 $i++;
                 $j = 0;
             } else {
@@ -347,6 +348,30 @@ class GeoController extends Controller
         }
 
         return 'Success!';
+    }
+
+
+
+
+    public function trans()
+    {
+        return view('trans.trans');
+    }
+
+    public function ttt(Request $request)
+    {
+        $text = $request->trans;
+        $targetLanguage = 'ja';
+
+// $text = 'The text to translate."
+// $targetLanguage = 'ja';  // Which language to translate to?
+
+        $translate = new TranslateClient(['key' => 'AIzaSyDTieRijQIHlCiLBnmnxkSTIge80GUov8o']);
+        $result = $translate->translate($text, [
+            'target' => $targetLanguage,
+        ]);
+        print("Source language: $result[source]\n");
+        print("Translation: $result[text]\n");
     }
 
 }

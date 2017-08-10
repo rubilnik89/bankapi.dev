@@ -24,3 +24,9 @@ Route::get('placesPushAll', 'GeoController@placesPushAll')->name('placesPushAll'
 Route::get('placesPush100', 'GeoController@placesPush100')->name('placesPush100');
 Route::get('placesPush50photos', 'GeoController@placesPush50photos')->name('placesPush50photos');
 Route::get('push', 'GeoController@push')->name('push');
+
+
+
+
+Route::get('trans', 'GeoController@trans')->name('trans');
+Route::get('ttt', 'GeoController@ttt')->name('ttt');
