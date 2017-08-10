@@ -360,18 +360,35 @@ class GeoController extends Controller
 
     public function ttt(Request $request)
     {
-        $text = $request->trans;
-        $targetLanguage = 'ja';
+        ///////////////////////////////// 1 решение курлом
+        $data = [
+            'target' => 'en',
+            'q' => $request->trans,
+            'key' => 'AIzaSyDTieRijQIHlCiLBnmnxkSTIge80GUov8o',
+        ];
+        $query = http_build_query($data);
 
-// $text = 'The text to translate."
-// $targetLanguage = 'ja';  // Which language to translate to?
-
-        $translate = new TranslateClient(['key' => 'AIzaSyDTieRijQIHlCiLBnmnxkSTIge80GUov8o']);
-        $result = $translate->translate($text, [
-            'target' => $targetLanguage,
-        ]);
-        print("Source language: $result[source]\n");
-        print("Translation: $result[text]\n");
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "https://translation.googleapis.com/language/translate/v2");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
+        $output = curl_exec($ch);
+        curl_close($ch);
+        dd(json_decode($output));
+        ///////////////////////////////////////////////////////////////////////////////////////// 2 решение file_get_contents()
+//        $text = urlencode($request->trans);
+//        $homepage = file_get_contents("https://translation.googleapis.com/language/translate/v2?q=$text&target=en&key=AIzaSyDTieRijQIHlCiLBnmnxkSTIge80GUov8o");
+//        dd(json_decode($homepage));
+        ///////////////////////////////////////////////////////////////////// 3 решение библиотекой
+//        $text = $request->trans;
+//        $targetLanguage = 'ja';
+//
+//        $translate = new TranslateClient(['key' => 'AIzaSyDTieRijQIHlCiLBnmnxkSTIge80GUov8o']);
+//        $result = $translate->translate($text, [
+//            'target' => $targetLanguage,
+//        ]);
+//        print("Source language: $result[source]\n");
+//        print("Translation: $result[text]\n");
     }
 
 }
